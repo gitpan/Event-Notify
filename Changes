@@ -1,6 +1,9 @@
 Changes
 =======
 
+0.00003 - Wed 14 Nov 2007
+  - Allow observer to be a subroutine reference
+
 0.00002 - Wed 14 Nov 2007
   - Properly use Carp
 

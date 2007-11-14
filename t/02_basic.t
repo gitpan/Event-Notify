@@ -1,5 +1,5 @@
 use strict;
-use Test::More (tests => 11);
+use Test::More (tests => 17);
 
 BEGIN
 {
@@ -44,7 +44,7 @@ isa_ok( $notify, "Event::Notify");
     $notify->notify('foo');
     $notify->notify('bar');
     $notify->notify('baz');
-    $notify->notify('quux'); # should not casue ok()
+    $notify->notify('quux'); # should not cause ok()
 }
 
 {
@@ -53,4 +53,17 @@ isa_ok( $notify, "Event::Notify");
         $notify->register_event('foo', $observer);
     };
     like( $@, qr/does not implement a notify\(\) method/ );
+}
+
+{
+    my $observer = sub { 
+        my($event) = @_;
+        Test::More::ok(1);
+        Test::More::like($event, qr/^foo|bar|baz$/);
+    };
+
+    $notify->notify('foo');
+    $notify->notify('bar');
+    $notify->notify('baz');
+    $notify->notify('quux'); # should not cause ok()
 }

@@ -1,4 +1,4 @@
-# $Id: /mirror/perl/Event-Notify/trunk/lib/Event/Notify.pm 9014 2007-11-14T00:43:49.152431Z daisuke  $
+# $Id: /mirror/perl/Event-Notify/trunk/lib/Event/Notify.pm 9147 2007-11-14T03:33:20.022104Z daisuke  $
 #
 # Copyright (c) 2007 Daisuke Maki <daisuke@endeworks.jp>
 # All rights reserved.
@@ -7,7 +7,7 @@ package Event::Notify;
 use strict;
 use warnings;
 use vars qw($VERSION);
-$VERSION = '0.00002';
+$VERSION = '0.00003';
 use Carp;
 
 sub new
@@ -26,7 +26,7 @@ sub register_event
 {
     my($self, $event, $observer) = @_;
 
-    if (! $observer->can('notify')) {
+    if (ref $observer ne 'CODE' && ! $observer->can('notify')) {
         Carp::croak("$observer does not implement a notify() method");
     }
 
@@ -53,7 +53,12 @@ sub notify
     my ($self, $event, @args) = @_;
 
     my $observers = $self->{observers}{$event} || [];
-    $_->notify($event, @args) for @$observers;
+    foreach my $o (@$observers) {
+        ref $o eq 'CODE' ?
+            $o->($event, @args) :
+            $o->notify($event, @args) 
+        ;
+    }
 }
 
 1;
@@ -129,7 +134,10 @@ Think of it as sort of an automatic initializer.
 
 Registers an observer $observer as observing a particular event $event
 
-=head2 unregister_event($event,$obserer)
+The $observer can be either an object that implements a notify() method,
+or a subroutine reference.
+
+=head2 unregister_event($event,$observer)
 
 Unregisters an observer.
 
