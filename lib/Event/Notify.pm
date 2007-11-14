@@ -1,4 +1,4 @@
-# $Id: /mirror/perl/Event-Notify/trunk/lib/Event/Notify.pm 9011 2007-11-13T06:20:52.950316Z daisuke  $
+# $Id: /mirror/perl/Event-Notify/trunk/lib/Event/Notify.pm 9014 2007-11-14T00:43:49.152431Z daisuke  $
 #
 # Copyright (c) 2007 Daisuke Maki <daisuke@endeworks.jp>
 # All rights reserved.
@@ -7,7 +7,8 @@ package Event::Notify;
 use strict;
 use warnings;
 use vars qw($VERSION);
-$VERSION = '0.00001';
+$VERSION = '0.00002';
+use Carp;
 
 sub new
 {

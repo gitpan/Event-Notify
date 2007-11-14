@@ -1,5 +1,8 @@
 Changes
 =======
 
+0.00002 - Wed 14 Nov 2007
+  - Properly use Carp
+
 0.00001 - Tue 13 Nov 2007
   - Initial release
