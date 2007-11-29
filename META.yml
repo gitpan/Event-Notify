@@ -2,6 +2,9 @@
 abstract: Simple Observer/Notifier
 author: 
   - Copyright (c) 2007 Daisuke Maki <daisuke@endeworks.jp>
+build_requires: 
+  Test::MockObject: 0
+  Test::More: 0
 distribution_type: module
 generated_by: Module::Install version 0.68
 license: perl
@@ -13,4 +16,6 @@ no_index:
   directory: 
     - inc
     - t
-version: 0.00003
+requires: 
+  Carp: 0
+version: 0.00004

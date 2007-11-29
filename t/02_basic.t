@@ -1,5 +1,6 @@
 use strict;
-use Test::More (tests => 17);
+use Test::More (tests => 16);
+use Test::MockObject;
 
 BEGIN
 {
@@ -10,32 +11,17 @@ my $notify = Event::Notify->new;
 ok( $notify );
 isa_ok( $notify, "Event::Notify");
 
-{
-    package Event::Notify::Test::Observer;
-    sub new { bless {}, shift }
-    sub register
-    {
-        my ($self, $notify) = @_;
-        $notify->register_event( 'foo', $self );
-        $notify->register_event( 'bar', $self );
-        $notify->register_event( 'baz', $self );
-    }
+{ # Normal case, using notify()
+    my $observer = Test::MockObject->new();
+    $observer->mock('register', sub {
+        my ($self, $subject) = @_;
+        $subject->register_event($_, $self) for qw(foo bar baz);
+    } );
+    $observer->mock('notify', sub {
+        my ($self, $event) = @_;
+        like($event, qr/^foo|bar|baz$/);
+    } );
 
-    sub notify
-    {
-        my ($self, $event, @args) = @_;
-        Test::More::ok(1);
-        Test::More::like($event, qr/^foo|bar|baz$/);
-    }
-}
-
-{
-    package Event::Notify::Test::BadObserver;
-    sub new { bless {}, shift }
-}
-
-{
-    my $observer = Event::Notify::Test::Observer->new;
     eval {
         $notify->register( $observer );
     };
@@ -45,25 +31,63 @@ isa_ok( $notify, "Event::Notify");
     $notify->notify('bar');
     $notify->notify('baz');
     $notify->notify('quux'); # should not cause ok()
+
+    $notify->clear_observers();
 }
 
-{
-    my $observer = Event::Notify::Test::BadObserver->new;
+{ # Normal case, each using their own method. No notify() is provided
+    my $observer = Test::MockObject->new();
+    $observer->mock('register', sub {
+        my ($self, $subject) = @_;
+        $subject->register_event($_, $self, { method => $_ }) for qw(foo bar baz);
+    } );
+
+    foreach my $e qw(foo bar baz) {
+        $observer->mock($e, sub {
+            my ($self, $event) = @_;
+            is($e, $event, "method $e was called for the appropriate event");
+        } );
+    }
+
     eval {
-        $notify->register_event('foo', $observer);
+        $notify->register( $observer );
     };
-    like( $@, qr/does not implement a notify\(\) method/ );
+    ok( !$@, "register() seems to work" );
+    
+    $notify->notify('foo');
+    $notify->notify('bar');
+    $notify->notify('baz');
+    $notify->notify('quux'); # should not cause ok()
+    $notify->clear_observers();
 }
 
-{
+{ # Normal case. We're passing a coderef
     my $observer = sub { 
         my($event) = @_;
-        Test::More::ok(1);
-        Test::More::like($event, qr/^foo|bar|baz$/);
+        like($event, qr/^foo|bar|baz$/, "proper event $event notified");
     };
+    $notify->register_event( $_, $observer ) for qw(foo bar baz);
 
     $notify->notify('foo');
     $notify->notify('bar');
     $notify->notify('baz');
     $notify->notify('quux'); # should not cause ok()
+    $notify->clear_observers();
 }
+
+{ # Bad cases. The object does not implement the specified method
+    my $observer = Test::MockObject->new;
+    eval {
+        $notify->register_event('foo', $observer );
+    };
+    like( $@, qr/does not implement a notify\(\) method/, "properly croaks without notify()" );
+
+    $observer->mock('notify', sub {});
+    eval {
+        $notify->register_event('foo', $observer, { method => 'foo' });
+    };
+    like( $@, qr/does not implement a foo\(\) method/, "properly croaks without foo()" );
+    $notify->clear_observers();
+}
+
+
