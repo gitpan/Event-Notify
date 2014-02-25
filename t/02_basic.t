@@ -42,7 +42,7 @@ isa_ok( $notify, "Event::Notify");
         $subject->register_event($_, $self, { method => $_ }) for qw(foo bar baz);
     } );
 
-    foreach my $e qw(foo bar baz) {
+    foreach my $e (qw(foo bar baz)) {
         $observer->mock($e, sub {
             my ($self, $event) = @_;
             is($e, $event, "method $e was called for the appropriate event");
